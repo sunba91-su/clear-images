@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+####################  variables ####################
+curent_version="1.0.3"
+Maintainer="Mohammad Sajjad Asiyabani"
+email_address="mohammadasiyabanii3@gmail.com"
+program_name="image_cleaner"
+docker_none_images_list=()
+##################################################
+
+####################  functions  ####################
+#leave_line use for enter some empty line in terminal
+leave_line() 
+{
+    curent_line=0
+    total_number=$1
+    while [[ $curent_line < $total_number ]]
+    do
+        echo
+        curent_line=`expr $curent_line + 1`
+        
+    done
+
+    
+}
+#eparator_line add an color line that full it by ** in terminal 
+separator_line() 
+{
+    echo -e '\033[36;40m ********************************************\033[0m'
+}
+#custom_message fuction is a function that echo your message in color line
+custom_message() 
+{
+    echo -e '\033[36;40m ***************************************************'
+    echo $1
+    echo -e '\033[26;40m *************************************************** \033[0m'
+}
+
+#red_echo echo your message in red colore
+red_echo()
+{
+    echo -e "\033[31;40m $1 \033[0m"
+}
+
+#green_echo echo your message in green colore
+green_echo()
+{
+    echo -e "\033[32;40m $1 \033[0m"
+}
+
+alert_echo()
+{
+    echo -e "\033[7;49;93m $1 \033[0m"
+}
+#print_version print the curent version of installer
+print_version()
+{
+    leave_line 2
+    separator_line
+    leave_line 1
+    green_echo "by $email_address"
+    leave_line 1
+    separator_line
+    leave_line 1
+    green_echo "Maintainer : $Maintainer"
+    leave_line 1
+    separator_line
+    leave_line 1
+    green_echo "Product Name : $program_name"
+    leave_line 1
+    separator_line
+    leave_line 1
+    green_echo "curent Version : $curent_version "
+    leave_line 1
+    separator_line
+}
+if [[ $1 == "-v" ]] || [[ $1 == "--version" ]];
+then
+    print_version
+fi
+if [[ $EUID -ne 0 ]]; then
+    red_echo "This command must be run as root"
+    exit 1
+fi
+function get_none_images_ID (){
+    custom_message "getting images information"
+    alert_echo "please wait ..."
+    docker_none_images_list=`docker images --filter "dangling=true" -q`
+    sleep 5
+    green_echo "getting images information succeeded"
+    separator_line
+}
+function print_images_information (){
+    alert_echo "these images are found on your system and going to remove them ..."
+    docker images --filter "dangling=true"
+    sleep 2
+}
+function remove_none_images (){
+    custom_message "start removing none images"
+    docker container prune -f
+    for none_image in ${docker_none_images_list[@]} ;
+    do
+        alert_echo "start removing $none_image "
+        docker rmi $none_image 2>&1 > /dev/null
+    done
+}
+
+function main (){
+    get_none_images_ID
+    print_images_information
+    remove_none_images
+}
+##################################################
+main
